@@ -30,6 +30,11 @@ const resultsWrapper = document.querySelector('.results');
 const onInput = async (event) => {
     const movies = await fetchData(event.target.value);
 
+    if (!movies.length) {
+        dropdown.classList.remove('is-active');
+        return;
+    }
+
     resultsWrapper.innerHTML = '';
     dropdown.classList.add('is-active');
     for (let movie of movies) {
@@ -40,6 +45,12 @@ const onInput = async (event) => {
        <img src="${imgSrc}"/>
        ${movie.Title}
        `;
+
+        option.addEventListener('click', () => {
+            dropdown.classList.remove('is-active');
+            input.value = movie.Title;
+            onMovieSelect(movie);
+        })
         resultsWrapper.appendChild(option);
     }
 };
@@ -47,5 +58,36 @@ const onInput = async (event) => {
 input.addEventListener('input', debounce(onInput, 500));
 document.addEventListener('click', (event) => {
     if (!root.contains(event.target)) {
-        dropdown.classList.remove('is-active')
+        dropdown.classList.remove('is-active');
     }});
+
+const onMovieSelect = async (movie) => {
+    console.log(movie);
+    const response = await axios.get('http://www.omdbapi.com/', {
+        params: {
+            apikey: '74bc5178',
+            i: movie.imdbID
+        }
+    });
+
+    document.querySelector('#summary').innerHTML = movieTemplate(response.data);
+}
+
+const movieTemplate = (movieDetail) => {
+    return `
+    <article class="media">
+  <figure class="media-left">
+    <p class="image">
+      <img src="${movieDetail.Poster}" alt="poster">
+    </p>
+  </figure>
+  <div class="media-content">
+    <div class="content">
+      <h1>${movieDetail.Title}</h1>
+      <h4>${movieDetail.Genre}</h4>
+      <p>${movieDetail.Plot}</p>
+    </div>
+  </div>
+</article>
+    `;
+}
